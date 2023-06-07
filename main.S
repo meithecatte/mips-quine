@@ -159,6 +159,11 @@ endinstr:
     addiu $sp, $sp, 8
 
 branch:
+    andi $t1, $s3, 16
+    sll $t0, $s1, 6
+    beq $t1, $0, printtarget
+    sra $a0, $t0, 4
+
     jal printreg
     srl $a0, $s1, 21
     jal sep
@@ -171,8 +176,10 @@ branch:
 
     sll $t0, $s1, 16
     sra $t0, $t0, 14
-    jal checksym
     addu $a0, $s0, $t0
+printtarget:
+    jal checksym
+    nop
     jal zstr
     move $a1, $v0
     j endinstr
@@ -300,6 +307,10 @@ labend: .ascii ":\n"
 #       10 ignore rs
 #       11 rs and offset form address
 instrs:
+    .byte 0x09
+    .asciz "j"
+    .byte 0x0d
+    .asciz "jal"
     .byte 0x11
     .asciz "beq"
     .byte 0x15
