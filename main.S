@@ -3,18 +3,13 @@
 
 __start:
     la $s0, __start
+    la $s2, endtext
 
+textloop:
     lw $s1, 0($s0)
     jal printinstr
     addiu $s0, $s0, 4
-
-    lw $s1, 0($s0)
-    jal printinstr
-    addiu $s0, $s0, 4
-
-    lw $s1, 0($s0)
-    jal printinstr
-    addiu $s0, $s0, 4
+    bne $s0, $s2, textloop
 
     li $v0, 4001
     li $a0, 0
@@ -32,12 +27,22 @@ printinstr:
     li $v0, 4004
     syscall
 
+    srl $t0, $s1, 21
+    li $t7, 288
+    bne $t0, $t7, not_li
+    nop
+    la $t1, instr_li
+    j found
+    li $t2, 2
+
+not_li:
     srl $t0, $s1, 24
     andi $t0, $t0, 252
 
     la $t1, instrs
 check:
     lb $t2, 0($t1)
+    beqz $t2, endinstr
     andi $t3, $t2, 252
     beq $t0, $t3, found
     addiu $t1, $t1, 1
@@ -67,6 +72,11 @@ measure:
     li $v0, 4004
     syscall
 
+    jal printreg
+    srl $a0, $s1, 16
+    jal sep
+    nop
+
     andi $t0, $t2, 2
     bnez $t0, nors
     nop
@@ -77,11 +87,6 @@ measure:
     nop
 
 nors:
-    jal printreg
-    srl $a0, $s1, 16
-    jal sep
-    nop
-
     sll $t0, $s1, 16
     jal printnum
     sra $t0, $t0, 16
@@ -112,7 +117,7 @@ endinstr:
     li $v0, 4004
     syscall
 
-    lw $ra, ($sp)
+    lw $ra, 0($sp)
     jr $ra
     addiu $sp, $sp, 8
 
@@ -166,7 +171,7 @@ digits:
     mfhi $t1
     addiu $t1, $t1, 48
     addiu $a1, $a1, -1
-    sb $t1, ($a1)
+    sb $t1, 0($a1)
     bnez $t0, digits
     addiu $a2, $a2, 1
 
@@ -175,6 +180,7 @@ digits:
     jr $ra
     nop
 
+endtext:
 .data
 
 buf: .space 16
@@ -186,6 +192,7 @@ newline: .ascii "\n"
 minus: .ascii "-"
 lparen: .ascii "("
 rparen: .ascii ")"
+instr_li: .asciz "li"
 
 # oooooott
 #       00 simple immediate instruction
@@ -195,7 +202,14 @@ rparen: .ascii ")"
 instrs:
     .byte 0x24
     .asciz "addiu"
+    .byte 0x30
+    .asciz "andi"
     .byte 0x3e
     .asciz "lui"
+    .byte 0x83
+    .asciz "lb"
     .byte 0x8f
     .asciz "lw"
+    .byte 0xaf
+    .asciz "sw"
+    .byte 0x00
