@@ -35,7 +35,7 @@ findsymtab:
 textloop:
     jal checksym
     move $a0, $s0
-    beqz $v0, notlabel
+    beq $v0, $0 , notlabel
     move $a1, $v0
 
     jal zstr
@@ -83,7 +83,7 @@ not_li:
     la $t1, instrs
 check:
     lb $s3, 0($t1)
-    beqz $s3, endinstr
+    beq $s3, $0 , endinstr
     andi $t3, $s3, 252
     beq $t0, $t3, found
     addiu $t1, $t1, 1
@@ -103,6 +103,11 @@ found:
     li $a2, 1
     li $v0, 4004
     syscall
+
+    andi $t0, $s3, 3
+    addiu $t0, $t0, -1
+    beq $t0, $0 , branch
+    nop
 
     jal printreg
     srl $a0, $s1, 16
@@ -124,7 +129,7 @@ nors:
     sra $t0, $t0, 16
 
     andi $t0, $s3, 1
-    beqz $t0, endinstr
+    beq $t0, $0 , endinstr
     nop
 
     li $a0, 1
@@ -152,6 +157,27 @@ endinstr:
     lw $ra, 0($sp)
     jr $ra
     addiu $sp, $sp, 8
+
+branch:
+    jal printreg
+    srl $a0, $s1, 21
+    jal sep
+    nop
+
+    jal printreg
+    srl $a0, $s1, 16
+    jal sep
+    nop
+
+    sll $t0, $s1, 16
+    sra $t0, $t0, 14
+    jal checksym
+    addu $a0, $s0, $t0
+    jal zstr
+    move $a1, $v0
+    j endinstr
+    nop
+
 
 sep:
     li $a0, 1
@@ -234,7 +260,7 @@ checksym:
 checksymloop:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
-    beqz $t2, emptyname
+    beq $t2, $0 , emptyname
     addiu $t0, $t0, 16
 
     beq $a0, $t1, foundsym
@@ -273,6 +299,10 @@ labend: .ascii ":\n"
 #       10 ignore rs
 #       11 rs and offset form address
 instrs:
+    .byte 0x11
+    .asciz "beq"
+    .byte 0x15
+    .asciz "bne"
     .byte 0x24
     .asciz "addiu"
     .byte 0x30
