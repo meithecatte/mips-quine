@@ -5,17 +5,23 @@ __start:
     la $t0, __executable_start
     lw $t1, 32($t0)
     addu $t1, $t0, $t1
+    move $s0, $t1
     li $t3, 2
 findsymtab:
     lw $t4, 4($t1)
     lw $t5, 16($t1)
-    lw $t2, 20($t1)
-    beq $t3, $t4, foundsymtab
+    lw $t6, 20($t1)
+    lw $t7, 24($t1)
+    bne $t3, $t4, findsymtab
     addiu $t1, $t1, 40
 
-foundsymtab:
     addu $s6, $t0, $t5
-    addu $s7, $t1, $t2
+    addu $s7, $s6, $t6
+    li $t1, 40
+    mul $t2, $t1, $t7
+    addu $t2, $s0, $t2
+    lw $t3, 16($t2)
+    addu $s5, $t0, $t3
 
     la $s0, __start
     la $s2, endtext
@@ -24,8 +30,10 @@ textloop:
     jal checksym
     move $a0, $s0
     beqz $v0, notlabel
-    li $a0, 1
+    move $a1, $v0
 
+    jal zstr
+    nop
     la $a1, labend
     li $a2, 2
     li $v0, 4004
@@ -60,7 +68,7 @@ printinstr:
     nop
     la $t1, instr_li
     j found
-    li $t2, 2
+    li $s3, 2
 
 not_li:
     srl $t0, $s1, 24
@@ -68,9 +76,9 @@ not_li:
 
     la $t1, instrs
 check:
-    lb $t2, 0($t1)
-    beqz $t2, endinstr
-    andi $t3, $t2, 252
+    lb $s3, 0($t1)
+    beqz $s3, endinstr
+    andi $t3, $s3, 252
     beq $t0, $t3, found
     addiu $t1, $t1, 1
 
@@ -82,17 +90,8 @@ skip:
     nop
 
 found:
-    li $a0, 1
+    jal zstr
     move $a1, $t1
-    li $a2, -1
-measure:
-    lb $t3, 0($t1)
-    addiu $a2, $a2, 1
-    bnez $t3, measure
-    addiu $t1, $t1, 1
-
-    li $v0, 4004
-    syscall
 
     la $a1, indent
     li $a2, 1
@@ -104,7 +103,7 @@ measure:
     jal sep
     nop
 
-    andi $t0, $t2, 2
+    andi $t0, $s3, 2
     bnez $t0, nors
     nop
 
@@ -118,7 +117,7 @@ nors:
     jal printnum
     sra $t0, $t0, 16
 
-    andi $t0, $t2, 1
+    andi $t0, $s3, 1
     beqz $t0, endinstr
     nop
 
@@ -152,6 +151,22 @@ sep:
     li $a0, 1
     la $a1, comma
     li $a2, 2
+    li $v0, 4004
+    syscall
+    jr $ra
+    nop
+
+# $a1
+zstr:
+    li $a0, 1
+    move $t0, $a1
+    li $a2, -1
+measure:
+    lb $t1, 0($t0)
+    addiu $a2, $a2, 1
+    bnez $t1, measure
+    addiu $t0, $t0, 1
+
     li $v0, 4004
     syscall
     jr $ra
@@ -213,9 +228,13 @@ checksym:
 checksymloop:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
-    beq $a0, $t1, foundsym
+    beqz $t2, emptyname
     addiu $t0, $t0, 16
 
+    beq $a0, $t1, foundsym
+    nop
+
+emptyname:
     bne $t0, $s7, checksymloop
     nop
 
@@ -224,7 +243,7 @@ checksymloop:
 
 foundsym:
     jr $ra
-    li $v0, 1
+    addu $v0, $t2, $s5
 
 endtext:
 .data
