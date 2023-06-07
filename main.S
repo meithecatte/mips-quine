@@ -35,7 +35,7 @@ findsymtab:
 textloop:
     jal checksym
     move $a0, $s0
-    beq $v0, $0 , notlabel
+    beq $v0, $0, notlabel
     move $a1, $v0
 
     jal zstr
@@ -83,7 +83,7 @@ not_li:
     la $t1, instrs
 check:
     lb $s3, 0($t1)
-    beq $s3, $0 , endinstr
+    beq $s3, $0, endinstr
     andi $t3, $s3, 252
     beq $t0, $t3, found
     addiu $t1, $t1, 1
@@ -106,7 +106,7 @@ found:
 
     andi $t0, $s3, 3
     addiu $t0, $t0, -1
-    beq $t0, $0 , branch
+    beq $t0, $0, branch
     nop
 
     jal printreg
@@ -129,7 +129,7 @@ nors:
     sra $t0, $t0, 16
 
     andi $t0, $s3, 1
-    beq $t0, $0 , endinstr
+    beq $t0, $0, endinstr
     nop
 
     li $a0, 1
@@ -217,6 +217,7 @@ printreg:
     la $a1, regs
     addu $a1, $a1, $t0
     li $a2, 2
+    movz $a2, $a0, $t0
     li $v0, 4004
     syscall
     jr $ra
@@ -240,7 +241,7 @@ pos:
     li $a2, 0
 
 digits:
-    divu $0 , $t0, $t7
+    divu $0, $t0, $t7
     mflo $t0
     mfhi $t1
     addiu $t1, $t1, 48
@@ -260,7 +261,7 @@ checksym:
 checksymloop:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
-    beq $t2, $0 , emptyname
+    beq $t2, $0, emptyname
     addiu $t0, $t0, 16
 
     beq $a0, $t1, foundsym
