@@ -4,11 +4,15 @@
 __start:
     la $s0, __start
 
-    lw $s1, ($s0)
+    lw $s1, 0($s0)
     jal printinstr
     addiu $s0, $s0, 4
 
-    lw $s1, ($s0)
+    lw $s1, 0($s0)
+    jal printinstr
+    addiu $s0, $s0, 4
+
+    lw $s1, 0($s0)
     jal printinstr
     addiu $s0, $s0, 4
 
@@ -20,7 +24,7 @@ __start:
 # $s1 = instr
 printinstr:
     addiu $sp, $sp, -8
-    sw $ra, ($sp)
+    sw $ra, 0($sp)
 
     li $a0, 1
     la $a1, indent
@@ -33,13 +37,13 @@ printinstr:
 
     la $t1, instrs
 check:
-    lb $t2, ($t1)
+    lb $t2, 0($t1)
     andi $t3, $t2, 252
     beq $t0, $t3, found
     addiu $t1, $t1, 1
 
 skip:
-    lb $t2, ($t1)
+    lb $t2, 0($t1)
     bnez $t2, skip
     addiu $t1, $t1, 1
     j check
@@ -50,7 +54,7 @@ found:
     move $a1, $t1
     li $a2, -1
 measure:
-    lb $t3, ($t1)
+    lb $t3, 0($t1)
     addiu $a2, $a2, 1
     bnez $t3, measure
     addiu $t1, $t1, 1
@@ -78,6 +82,30 @@ nors:
     jal sep
     nop
 
+    sll $t0, $s1, 16
+    jal printnum
+    sra $t0, $t0, 16
+
+    andi $t0, $t2, 1
+    beqz $t0, endinstr
+    nop
+
+    li $a0, 1
+    la $a1, lparen
+    li $a2, 1
+    li $v0, 4004
+    syscall
+
+    jal printreg
+    srl $a0, $s1, 21
+
+    li $a0, 1
+    la $a1, rparen
+    li $a2, 1
+    li $v0, 4004
+    syscall
+
+endinstr:
     li $a0, 1
     la $a1, newline
     li $a2, 1
@@ -115,19 +143,59 @@ printreg:
     jr $ra
     nop
 
+# $t0
+printnum:
+    bgez $t0, pos
+    li $t7, 10
+
+    li $a0, 1
+    la $a1, minus
+    li $a2, 1
+    li $v0, 4004
+    syscall
+    negu $t0, $t0
+
+pos:
+    li $a0, 1
+    la $a1, buf+15
+    li $a2, 0
+
+digits:
+    divu $0 , $t0, $t7
+    mflo $t0
+    mfhi $t1
+    addiu $t1, $t1, 48
+    addiu $a1, $a1, -1
+    sb $t1, ($a1)
+    bnez $t0, digits
+    addiu $a2, $a2, 1
+
+    li $v0, 4004
+    syscall
+    jr $ra
+    nop
+
 .data
 
+buf: .space 16
 dollar: .ascii "$"
 indent: .ascii "    "
-regs: .ascii "r0atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
+regs: .ascii "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
 comma: .ascii ", "
 newline: .ascii "\n"
+minus: .ascii "-"
+lparen: .ascii "("
+rparen: .ascii ")"
 
-# oooooosj
-# j = is jump
-# s = skip rs
+# oooooott
+#       00 simple immediate instruction
+#       01 jump
+#       10 ignore rs
+#       11 rs and offset form address
 instrs:
     .byte 0x24
     .asciz "addiu"
     .byte 0x3e
     .asciz "lui"
+    .byte 0x8f
+    .asciz "lw"
