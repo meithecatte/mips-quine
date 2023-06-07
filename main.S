@@ -2,6 +2,12 @@
 .set noreorder
 
 __start:
+    li $a0, 1
+    la $a1, initstr
+    li $a2, 32
+    li $v0, 4004
+    syscall
+
     la $t0, __executable_start
     lw $t1, 32($t0)
     addu $t1, $t0, $t1
@@ -249,6 +255,7 @@ endtext:
 .data
 
 buf: .space 16
+initstr: .ascii ".global __start\n.set noreorder\n\n"
 dollar: .ascii "$"
 indent: .ascii "    "
 regs: .ascii "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
