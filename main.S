@@ -2,17 +2,44 @@
 .set noreorder
 
 __start:
+    la $t0, __executable_start
+    lw $t1, 32($t0)
+    addu $t1, $t0, $t1
+    li $t3, 2
+findsymtab:
+    lw $t4, 4($t1)
+    lw $t5, 16($t1)
+    lw $t2, 20($t1)
+    beq $t3, $t4, foundsymtab
+    addiu $t1, $t1, 40
+
+foundsymtab:
+    addu $s6, $t0, $t5
+    addu $s7, $t1, $t2
+
     la $s0, __start
     la $s2, endtext
 
 textloop:
+    jal checksym
+    move $a0, $s0
+    beqz $v0, notlabel
+    li $a0, 1
+
+    la $a1, labend
+    li $a2, 2
+    li $v0, 4004
+    syscall
+
+notlabel:
     lw $s1, 0($s0)
     jal printinstr
     addiu $s0, $s0, 4
     bne $s0, $s2, textloop
+    nop
 
-    li $v0, 4001
     li $a0, 0
+    li $v0, 4001
     syscall
 
 # preserves $s0
@@ -180,6 +207,25 @@ digits:
     jr $ra
     nop
 
+# $a0
+checksym:
+    move $t0, $s6
+checksymloop:
+    lw $t1, 4($t0)
+    lw $t2, 0($t0)
+    beq $a0, $t1, foundsym
+    addiu $t0, $t0, 16
+
+    bne $t0, $s7, checksymloop
+    nop
+
+    jr $ra
+    li $v0, 0
+
+foundsym:
+    jr $ra
+    li $v0, 1
+
 endtext:
 .data
 
@@ -193,6 +239,7 @@ minus: .ascii "-"
 lparen: .ascii "("
 rparen: .ascii ")"
 instr_li: .asciz "li"
+labend: .ascii ":\n"
 
 # oooooott
 #       00 simple immediate instruction
@@ -208,6 +255,8 @@ instrs:
     .asciz "lui"
     .byte 0x83
     .asciz "lb"
+    .byte 0x87
+    .asciz "lh"
     .byte 0x8f
     .asciz "lw"
     .byte 0xaf
