@@ -31,21 +31,9 @@ stab:
     la $s2, z
     li $s4, 0
 p1:
-    jal sym
-    addu $a0, $s0, $0
-
-    beq $v0, $0, nlab
-    addu $a1, $v0, $0
-
-    jal zstr
-    addu $0, $0, $0
-
-    la $a1, lz
-    jal zstr
-    addu $0, $0, $0
-
-nlab:
+    jal psym
     lw $s1, 0($s0)
+
     addiu $s0, $s0, 4
     la $a1, sp
     jal zstr
@@ -156,13 +144,13 @@ ngap:
     addu $0, $0, $0
 
     la $s0, s0
-    la $s2, t1
+    la $s2, y
 p2:
-    jal sym
-    addu $a0, $s0, $0
+    jal psym
+    addu $0, $0, $0
 
-    jal zstr
-    addu $a1, $v0, $0
+    beq $s0, $s2, exit
+    li $a0, 0
 
     la $a1, sa
     jal zstr
@@ -215,9 +203,10 @@ p2nl:
     jal zstr
     addiu $s0, $s0, 1
 
-    bne $s0, $s2, p2
-    li $a0, 0
+    j p2
+    addu $0, $0, $0
 
+exit:
     li $v0, 4001
     syscall
 
@@ -374,6 +363,27 @@ digits:
     jr $ra
     addu $0, $0, $0
 
+psym:
+    addiu $sp, $sp, -8
+    sw $ra, 0($sp)
+    jal sym
+    addu $a0, $s0, $0
+
+    beq $v0, $0, nlab
+    addu $a1, $v0, $0
+
+    jal zstr
+    addu $0, $0, $0
+
+    la $a1, lz
+    jal zstr
+    addu $0, $0, $0
+
+nlab:
+    lw $ra, 0($sp)
+    jr $ra
+    addiu $sp, $sp, 8
+
 sym:
     addu $t0, $s6, $0
 nextsym:
@@ -433,74 +443,63 @@ z:
 .data
 
 buf: .space 16
-s0: .asciz ".global __start\012.set noreorder\012\012"
-s1: .asciz "z:\012.data\012\012buf: .space 16\012"
-usd: .asciz "$"
-sp: .asciz "    "
-r_: .asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
-comma: .asciz ", "
-nl: .asciz "\012"
-ng: .asciz "-"
-lp: .asciz "("
-rp: .asciz ")"
-sli: .asciz "li "
-sla: .asciz "la "
-lz: .asciz ":\012"
-sa: .asciz ": .asciz \042"
-se: .asciz "\042\012"
-
+s0:
+.asciz ".global __start\012.set noreorder\012\012"
+s1:
+.asciz "z:\012.data\012\012buf: .space 16\012"
+usd:
+.asciz "$"
+sp:
+.asciz "    "
+r_:
+.asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
+comma:
+.asciz ", "
+nl:
+.asciz "\012"
+ng:
+.asciz "-"
+lp:
+.asciz "("
+rp:
+.asciz ")"
+sli:
+.asciz "li "
+sla:
+.asciz "la "
+lz:
+.asciz ":\012"
+sa:
+.asciz ".asciz \042"
+se:
+.asciz "\042\012"
 t1:
-    .byte 0x09
-    .asciz "j "
-    .byte 0x0d
-    .asciz "jal "
-    .byte 0x11
-    .asciz "beq "
-    .byte 0x15
-    .asciz "bne "
-    .byte 0x24
-    .asciz "addiu "
-    .byte 0x2c
-    .asciz "sltiu "
-    .byte 0x30
-    .asciz "andi "
-    .byte 0x83
-    .asciz "lb "
-    .byte 0x87
-    .asciz "lh "
-    .byte 0x8f
-    .asciz "lw "
-    .byte 0x93
-    .asciz "lbu "
-    .byte 0xa3
-    .asciz "sb "
-    .byte 0xaf
-    .asciz "sw "
-    .byte 0x00
-
+.asciz "\011j "
+.asciz "\015jal "
+.asciz "\021beq "
+.asciz "\025bne "
+.asciz "$addiu "
+.asciz ",sltiu "
+.asciz "0andi "
+.asciz "\203lb "
+.asciz "\207lh "
+.asciz "\217lw "
+.asciz "\223lbu "
+.asciz "\243sb "
+.asciz "\257sw "
+.asciz ""
 t0:
-    .byte 0x02
-    .asciz "sll "
-    .byte 0x0a
-    .asciz "srl "
-    .byte 0x0e
-    .asciz "sra "
-    .byte 0x20
-    .asciz "jr $ra"
-    .byte 0x2b
-    .asciz "movz "
-    .byte 0x2f
-    .asciz "movn "
-    .byte 0x30
-    .asciz "syscall"
-    .byte 0x41
-    .asciz "mfhi "
-    .byte 0x49
-    .asciz "mflo "
-    .byte 0x6f
-    .asciz "divu "
-    .byte 0x87
-    .asciz "addu "
-    .byte 0x8f
-    .asciz "subu "
-    .byte 0x00
+.asciz "\002sll "
+.asciz "\012srl "
+.asciz "\016sra "
+.asciz " jr $ra"
+.asciz "+movz "
+.asciz "/movn "
+.asciz "0syscall"
+.asciz "Amfhi "
+.asciz "Imflo "
+.asciz "odivu "
+.asciz "\207addu "
+.asciz "\217subu "
+.asciz ""
+y:
