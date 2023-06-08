@@ -40,7 +40,7 @@ p1:
     jal zstr
     addu $0, $0, $0
 
-    la $a1, labend
+    la $a1, lz
     jal zstr
     addu $0, $0, $0
 
@@ -74,7 +74,7 @@ p2:
     jal zstr
     addu $a1, $v0, $0
 
-    la $a1, strbegin
+    la $a1, sa
     jal zstr
     addu $0, $0, $0
 
@@ -107,7 +107,7 @@ pch:
     addiu $s0, $s0, 1
 
 p2nl:
-    la $a1, strend
+    la $a1, se
     jal zstr
     addiu $s0, $s0, 1
 
@@ -193,7 +193,7 @@ found:
 
 nors:
     sll $t0, $s1, 16
-    jal printnum
+    jal pnum
     sra $t0, $t0, 16
 
     andi $t0, $s3, 1
@@ -231,17 +231,15 @@ bx:
     srl $a0, $s1, 21
 
     jal sep
-    addu $0, $0, $0
+    sll $t7, $s1, 16
 
     jal preg
     srl $a0, $s1, 16
 
     jal sep
-    addu $0, $0, $0
+    sra $t7, $t7, 14
 
-    sll $t0, $s1, 16
-    sra $t0, $t0, 14
-    addu $a0, $s0, $t0
+    addu $a0, $s0, $t7
 ptgt:
     jal sym
     addu $0, $0, $0
@@ -259,8 +257,8 @@ renc:
     sll $a0, $a0, 2
 
     andi $t0, $s3, 3
-    beq $t0, $0, simple
-    addu $0, $0, $0
+    beq $t0, $0, simp
+    addiu $t0, $s3, -32
 
     jal preg
     srl $a0, $s1, 11
@@ -283,7 +281,7 @@ renc:
     addu $0, $0, $0
 
     srl $t0, $s1, 6
-    jal printnum
+    jal pnum
     andi $t0, $t0, 31
 
     j p1nl
@@ -302,8 +300,7 @@ dst:
     j p1nl
     addu $0, $0, $0
 
-simple:
-    addiu $t0, $s3, -32
+simp:
     li $t1, 2
     li $s4, 1
     j p1nl
@@ -346,7 +343,7 @@ preg:
     jr $ra
     addu $0, $0, $0
 
-printnum:
+pnum:
     srl $t1, $t0, 31
     beq $t1, $0, pos
     li $t7, 10
@@ -383,13 +380,13 @@ sym:
 nextsym:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
-    beq $t2, $0, emptyname
+    beq $t2, $0, emp
     addiu $t0, $t0, 16
 
     beq $a0, $t1, symok
     addu $0, $0, $0
 
-emptyname:
+emp:
     bne $t0, $s7, nextsym
     addu $0, $0, $0
 
@@ -449,9 +446,9 @@ lp: .asciz "("
 rp: .asciz ")"
 sli: .asciz "li "
 sla: .asciz "la "
-labend: .asciz ":\n"
-strbegin: .asciz ": .asciz \""
-strend: .asciz "\"\n"
+lz: .asciz ":\n"
+sa: .asciz ": .asciz \""
+se: .asciz "\"\n"
 sbs: .asciz "\\n\\\"\\\\"
 
 tab:
