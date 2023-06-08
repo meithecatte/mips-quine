@@ -139,7 +139,7 @@ found:
     nop
 
     andi $t0, $s3, 2
-    bnez $t0, nors
+    bne $t0, $0, nors
     nop
 
     jal printreg
@@ -227,7 +227,7 @@ zstr:
 measure:
     lb $t1, 0($t0)
     addiu $a2, $a2, 1
-    bnez $t1, measure
+    bne $t1, $0, measure
     addiu $t0, $t0, 1
 
     li $v0, 4004
@@ -279,7 +279,7 @@ digits:
     addiu $t1, $t1, 48
     addiu $a1, $a1, -1
     sb $t1, 0($a1)
-    bnez $t0, digits
+    bne $t0, $0, digits
     addiu $a2, $a2, 1
 
     li $v0, 4004
@@ -353,6 +353,8 @@ instrs:
     .asciz "lh"
     .byte 0x8f
     .asciz "lw"
+    .byte 0xa3
+    .asciz "sb"
     .byte 0xaf
     .asciz "sw"
     .byte 0x00
