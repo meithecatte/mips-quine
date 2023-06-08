@@ -29,18 +29,19 @@ findsymtab:
     addu $t2, $s0, $t2
     lw $t3, 16($t2)
     addu $s5, $t0, $t3
-
     la $s0, __start
     la $s2, endtext
-
+    li $s4, 0
 textloop:
     jal checksym
     addu $a0, $s0, $0
+
     beq $v0, $0, notlabel
     addu $a1, $v0, $0
 
     jal zstr
     addu $0, $0, $0
+
     la $a1, labend
     li $a2, 2
     li $v0, 4004
@@ -50,19 +51,34 @@ notlabel:
     lw $s1, 0($s0)
     jal printinstr
     addiu $s0, $s0, 4
+
+    addiu $t0, $s4, -1
+    bne $t0, $0, noextranl
+    movn $s4, $t0, $s4
+
+    li $a0, 1
+    la $a1, newline
+    li $a2, 1
+    li $v0, 4004
+    syscall
+
+noextranl:
     bne $s0, $s2, textloop
     addu $0, $0, $0
+
+    li $a0, 1
+    la $a1, midstr
+    li $a2, 31
+    li $v0, 4004
+    syscall
 
     li $a0, 0
     li $v0, 4001
     syscall
 
-# preserves $s0
-# $s1 = instr
 printinstr:
     addiu $sp, $sp, -8
     sw $ra, 0($sp)
-
     li $a0, 1
     la $a1, indent
     li $a2, 4
@@ -78,6 +94,7 @@ printinstr:
     li $a2, 3
     li $v0, 4004
     syscall
+
     j found
     li $s3, 2
 
@@ -85,6 +102,7 @@ not_li:
     srl $t0, $s1, 26
     beq $t0, $0, reginstr
     li $t7, 15
+
     bne $t0, $t7, not_la
     addu $0, $0, $0
 
@@ -96,6 +114,7 @@ not_li:
 
     jal printreg
     srl $a0, $s1, 16
+
     jal sep
     addu $0, $0, $0
 
@@ -110,6 +129,7 @@ not_la:
     la $a1, instrs
     jal gettable
     andi $a0, $a0, 252
+
     beq $v0, $0, endinstr
     addu $0, $0, $0
 
@@ -121,6 +141,7 @@ found:
 
     jal printreg
     srl $a0, $s1, 16
+
     jal sep
     addu $0, $0, $0
 
@@ -130,6 +151,7 @@ found:
 
     jal printreg
     srl $a0, $s1, 21
+
     jal sep
     addu $0, $0, $0
 
@@ -169,6 +191,7 @@ endinstr:
     addiu $sp, $sp, 8
 
 branch:
+    li $s4, 2
     andi $t1, $s3, 16
     sll $t0, $s1, 6
     beq $t1, $0, printtarget
@@ -176,11 +199,13 @@ branch:
 
     jal printreg
     srl $a0, $s1, 21
+
     jal sep
     addu $0, $0, $0
 
     jal printreg
     srl $a0, $s1, 16
+
     jal sep
     addu $0, $0, $0
 
@@ -190,8 +215,10 @@ branch:
 printtarget:
     jal checksym
     addu $0, $0, $0
+
     jal zstr
     addu $a1, $v0, $0
+
     j endinstr
     addu $0, $0, $0
 
@@ -202,7 +229,7 @@ reginstr:
     sll $a0, $a0, 2
 
     andi $t0, $s3, 3
-    beq $t0, $0, endinstr
+    beq $t0, $0, simple
     addu $0, $0, $0
 
     jal printreg
@@ -211,6 +238,7 @@ reginstr:
     andi $t0, $s3, 2
     beq $t0, $0, endinstr
     addu $0, $0, $0
+
     jal sep
     addu $0, $0, $0
 
@@ -220,6 +248,7 @@ reginstr:
 
     jal printreg
     srl $a0, $s1, 16
+
     jal sep
     addu $0, $0, $0
 
@@ -233,6 +262,7 @@ reginstr:
 reg_dst:
     jal printreg
     srl $a0, $s1, 21
+
     jal sep
     addu $0, $0, $0
 
@@ -242,16 +272,23 @@ reg_dst:
     j endinstr
     addu $0, $0, $0
 
+simple:
+    addiu $t0, $s3, -32
+    li $t1, 2
+    li $s4, 1
+    j endinstr
+    movz $s4, $t1, $t0
+
 sep:
     li $a0, 1
     la $a1, comma
     li $a2, 2
     li $v0, 4004
     syscall
+
     jr $ra
     addu $0, $0, $0
 
-# $a1
 zstr:
     li $a0, 1
     addu $t0, $a1, $0
@@ -264,10 +301,10 @@ measure:
 
     li $v0, 4004
     syscall
+
     jr $ra
     addu $0, $0, $0
 
-# $a0 & 31 = reg
 printreg:
     andi $a0, $a0, 31
     addu $t0, $a0, $a0
@@ -283,10 +320,10 @@ printreg:
     movz $a2, $a0, $t0
     li $v0, 4004
     syscall
+
     jr $ra
     addu $0, $0, $0
 
-# $t0
 printnum:
     srl $t1, $t0, 31
     beq $t1, $0, pos
@@ -297,14 +334,13 @@ printnum:
     li $a2, 1
     li $v0, 4004
     syscall
-    subu $t0, $0, $t0
 
+    subu $t0, $0, $t0
 pos:
     li $a0, 1
     la $a1, buf
     addiu $a1, $a1, 16
     li $a2, 0
-
 digits:
     divu $0, $t0, $t7
     mflo $t0
@@ -317,10 +353,10 @@ digits:
 
     li $v0, 4004
     syscall
+
     jr $ra
     addu $0, $0, $0
 
-# $a0
 checksym:
     addu $t0, $s6, $0
 checksymloop:
@@ -350,6 +386,7 @@ tableloop:
     lb $s3, 0($a1)
     beq $s3, $0, nomatch
     andi $t3, $s3, 252
+
     beq $a0, $t3, gotmatch
     addiu $a1, $a1, 1
 
@@ -357,12 +394,15 @@ skip:
     lb $t2, 0($a1)
     bne $t2, $0, skip
     addiu $a1, $a1, 1
+
     j tableloop
     addu $0, $0, $0
+
 nomatch:
     li $v0, 0
     jr $ra
     addiu $sp, $sp, 8
+
 gotmatch:
     jal zstr
     addu $0, $0, $0
@@ -377,6 +417,7 @@ endtext:
 
 buf: .space 16
 initstr: .ascii ".global __start\n.set noreorder\n\n"
+midstr: .ascii "endtext:\n.data\n\nbuf: .space 16\n"
 dollar: .ascii "$"
 indent: .ascii "    "
 regs: .ascii "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
@@ -388,12 +429,11 @@ rparen: .ascii ")"
 instr_li: .ascii "li "
 instr_la: .ascii "la "
 labend: .ascii ":\n"
+strbegin: .ascii ": .ascii \""
+strend: .ascii "\"\n"
+escquote: .ascii "\\\""
+escnl: .ascii "\\n"
 
-# oooooott
-#       00 simple immediate instruction
-#       01 jump
-#       10 ignore rs
-#       11 rs and offset form address
 instrs:
     .byte 0x09
     .asciz "j "
@@ -421,11 +461,6 @@ instrs:
     .asciz "sw "
     .byte 0x00
 
-# oooooott
-#       00 no args
-#       01 only rd
-#       10 shift
-#       11 rd, rs, rt
 reginstrs:
     .byte 0x02
     .asciz "sll "
@@ -437,6 +472,8 @@ reginstrs:
     .asciz "jr $ra"
     .byte 0x2b
     .asciz "movz "
+    .byte 0x2f
+    .asciz "movn "
     .byte 0x30
     .asciz "syscall"
     .byte 0x41
