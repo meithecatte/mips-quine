@@ -73,7 +73,7 @@ printinstr:
     li $t7, 288
     bne $t0, $t7, not_li
     nop
-    la $t1, instr_li
+    la $v0, instr_li
     j found
     li $s3, 2
 
@@ -101,27 +101,18 @@ not_li:
     addu $a0, $a0, $t0
 
 not_la:
-    srl $t0, $s1, 24
-    andi $t0, $t0, 252
+    srl $a0, $s1, 24
+    andi $a0, $a0, 252
 
-    la $t1, instrs
-check:
-    lb $s3, 0($t1)
-    beq $s3, $0, endinstr
-    andi $t3, $s3, 252
-    beq $t0, $t3, found
-    addiu $t1, $t1, 1
-
-skip:
-    lb $t2, 0($t1)
-    bne $t2, $0, skip
-    addiu $t1, $t1, 1
-    j check
+    la $a1, instrs
+    jal gettable
+    nop
+    beq $v0, $0, endinstr
     nop
 
 found:
     jal zstr
-    addu $a1, $0, $t1
+    addu $a1, $0, $v0
 
     la $a1, indent
     li $a2, 1
@@ -310,6 +301,26 @@ emptyname:
 foundsym:
     jr $ra
     addu $v0, $t2, $s5
+
+gettable:
+    lb $s3, 0($a1)
+    beq $s3, $0, nomatch
+    andi $t3, $s3, 252
+    beq $a0, $t3, gotmatch
+    addiu $a1, $a1, 1
+
+skip:
+    lb $t2, 0($a1)
+    bne $t2, $0, skip
+    addiu $a1, $a1, 1
+    j gettable
+    nop
+nomatch:
+    jr $ra
+    li $v0, 0
+gotmatch:
+    jr $ra
+    addu $v0, $0, $a1
 
 endtext:
 .data
