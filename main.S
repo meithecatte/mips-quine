@@ -256,7 +256,8 @@ printreg:
 
 # $t0
 printnum:
-    bgez $t0, pos
+    srl $t1, $t0, 31
+    beq $t1, $0, pos
     li $t7, 10
 
     li $a0, 1
