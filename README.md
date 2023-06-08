@@ -58,4 +58,8 @@ and map it into memory, but that seems really finicky.
   Sometimes you just don't feel like it and use `$t0`. Sometimes the only argument
   goes through `$a1`, skipping `$a0` entirely. I plead code golf.
 
+## Closing remarks
+
+meow!! ^_^ :3
+
 [nerdsnipe]: https://xkcd.com/356/
