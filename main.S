@@ -40,7 +40,7 @@ textloop:
     addu $a1, $v0, $0
 
     jal zstr
-    nop
+    addu $0, $0, $0
     la $a1, labend
     li $a2, 2
     li $v0, 4004
@@ -51,7 +51,7 @@ notlabel:
     jal printinstr
     addiu $s0, $s0, 4
     bne $s0, $s2, textloop
-    nop
+    addu $0, $0, $0
 
     li $a0, 0
     li $v0, 4001
@@ -72,16 +72,21 @@ printinstr:
     srl $t0, $s1, 21
     li $t7, 288
     bne $t0, $t7, not_li
-    nop
-    la $v0, instr_li
+    addu $0, $0, $0
+
+    la $a1, instr_li
+    li $a2, 3
+    li $v0, 4004
+    syscall
     j found
     li $s3, 2
 
 not_li:
     srl $t0, $s1, 26
+    beq $t0, $0, reginstr
     li $t7, 15
     bne $t0, $t7, not_la
-    nop
+    addu $0, $0, $0
 
     li $a0, 1
     la $a1, instr_la
@@ -92,7 +97,7 @@ not_li:
     jal printreg
     srl $a0, $s1, 16
     jal sep
-    nop
+    addu $0, $0, $0
 
     sll $t0, $s1, 16
     lh $a0, 2($s0)
@@ -102,41 +107,31 @@ not_li:
 
 not_la:
     srl $a0, $s1, 24
-    andi $a0, $a0, 252
-
     la $a1, instrs
     jal gettable
-    nop
+    andi $a0, $a0, 252
     beq $v0, $0, endinstr
-    nop
+    addu $0, $0, $0
 
 found:
-    jal zstr
-    addu $a1, $v0, $0
-
-    la $a1, indent
-    li $a2, 1
-    li $v0, 4004
-    syscall
-
     andi $t0, $s3, 3
     addiu $t0, $t0, -1
     beq $t0, $0, branch
-    nop
+    addu $0, $0, $0
 
     jal printreg
     srl $a0, $s1, 16
     jal sep
-    nop
+    addu $0, $0, $0
 
     andi $t0, $s3, 2
     bne $t0, $0, nors
-    nop
+    addu $0, $0, $0
 
     jal printreg
     srl $a0, $s1, 21
     jal sep
-    nop
+    addu $0, $0, $0
 
 nors:
     sll $t0, $s1, 16
@@ -145,7 +140,7 @@ nors:
 
     andi $t0, $s3, 1
     beq $t0, $0, endinstr
-    nop
+    addu $0, $0, $0
 
     li $a0, 1
     la $a1, lparen
@@ -182,24 +177,70 @@ branch:
     jal printreg
     srl $a0, $s1, 21
     jal sep
-    nop
+    addu $0, $0, $0
 
     jal printreg
     srl $a0, $s1, 16
     jal sep
-    nop
+    addu $0, $0, $0
 
     sll $t0, $s1, 16
     sra $t0, $t0, 14
     addu $a0, $s0, $t0
 printtarget:
     jal checksym
-    nop
+    addu $0, $0, $0
     jal zstr
     addu $a1, $v0, $0
     j endinstr
-    nop
+    addu $0, $0, $0
 
+reginstr:
+    andi $a0, $s1, 63
+    la $a1, reginstrs
+    jal gettable
+    sll $a0, $a0, 2
+
+    andi $t0, $s3, 3
+    beq $t0, $0, endinstr
+    addu $0, $0, $0
+
+    jal printreg
+    srl $a0, $s1, 11
+
+    andi $t0, $s3, 2
+    beq $t0, $0, endinstr
+    addu $0, $0, $0
+    jal sep
+    addu $0, $0, $0
+
+    andi $t0, $s3, 1
+    bne $t0, $0, reg_dst
+    addu $0, $0, $0
+
+    jal printreg
+    srl $a0, $s1, 16
+    jal sep
+    addu $0, $0, $0
+
+    srl $t0, $s1, 6
+    jal printnum
+    andi $t0, $t0, 31
+
+    j endinstr
+    addu $0, $0, $0
+
+reg_dst:
+    jal printreg
+    srl $a0, $s1, 21
+    jal sep
+    addu $0, $0, $0
+
+    jal printreg
+    srl $a0, $s1, 16
+
+    j endinstr
+    addu $0, $0, $0
 
 sep:
     li $a0, 1
@@ -208,7 +249,7 @@ sep:
     li $v0, 4004
     syscall
     jr $ra
-    nop
+    addu $0, $0, $0
 
 # $a1
 zstr:
@@ -224,7 +265,7 @@ measure:
     li $v0, 4004
     syscall
     jr $ra
-    nop
+    addu $0, $0, $0
 
 # $a0 & 31 = reg
 printreg:
@@ -243,7 +284,7 @@ printreg:
     li $v0, 4004
     syscall
     jr $ra
-    nop
+    addu $0, $0, $0
 
 # $t0
 printnum:
@@ -277,7 +318,7 @@ digits:
     li $v0, 4004
     syscall
     jr $ra
-    nop
+    addu $0, $0, $0
 
 # $a0
 checksym:
@@ -289,11 +330,11 @@ checksymloop:
     addiu $t0, $t0, 16
 
     beq $a0, $t1, foundsym
-    nop
+    addu $0, $0, $0
 
 emptyname:
     bne $t0, $s7, checksymloop
-    nop
+    addu $0, $0, $0
 
     jr $ra
     li $v0, 0
@@ -303,6 +344,9 @@ foundsym:
     addu $v0, $t2, $s5
 
 gettable:
+    addiu $sp, $sp, -8
+    sw $ra, 0($sp)
+tableloop:
     lb $s3, 0($a1)
     beq $s3, $0, nomatch
     andi $t3, $s3, 252
@@ -313,14 +357,20 @@ skip:
     lb $t2, 0($a1)
     bne $t2, $0, skip
     addiu $a1, $a1, 1
-    j gettable
-    nop
+    j tableloop
+    addu $0, $0, $0
 nomatch:
-    jr $ra
     li $v0, 0
-gotmatch:
     jr $ra
-    addu $v0, $a1, $0
+    addiu $sp, $sp, 8
+gotmatch:
+    jal zstr
+    addu $0, $0, $0
+
+    li $v0, 1
+    lw $ra, 0($sp)
+    jr $ra
+    addiu $sp, $sp, 8
 
 endtext:
 .data
@@ -335,8 +385,8 @@ newline: .ascii "\n"
 minus: .ascii "-"
 lparen: .ascii "("
 rparen: .ascii ")"
-instr_li: .asciz "li"
-instr_la: .asciz "la "
+instr_li: .ascii "li "
+instr_la: .ascii "la "
 labend: .ascii ":\n"
 
 # oooooott
@@ -346,27 +396,57 @@ labend: .ascii ":\n"
 #       11 rs and offset form address
 instrs:
     .byte 0x09
-    .asciz "j"
+    .asciz "j "
     .byte 0x0d
-    .asciz "jal"
+    .asciz "jal "
     .byte 0x11
-    .asciz "beq"
+    .asciz "beq "
     .byte 0x15
-    .asciz "bne"
+    .asciz "bne "
     .byte 0x24
-    .asciz "addiu"
+    .asciz "addiu "
     .byte 0x30
-    .asciz "andi"
+    .asciz "andi "
     .byte 0x3e
-    .asciz "lui"
+    .asciz "lui "
     .byte 0x83
-    .asciz "lb"
+    .asciz "lb "
     .byte 0x87
-    .asciz "lh"
+    .asciz "lh "
     .byte 0x8f
-    .asciz "lw"
+    .asciz "lw "
     .byte 0xa3
-    .asciz "sb"
+    .asciz "sb "
     .byte 0xaf
-    .asciz "sw"
+    .asciz "sw "
+    .byte 0x00
+
+# oooooott
+#       00 no args
+#       01 only rd
+#       10 shift
+#       11 rd, rs, rt
+reginstrs:
+    .byte 0x02
+    .asciz "sll "
+    .byte 0x0a
+    .asciz "srl "
+    .byte 0x0e
+    .asciz "sra "
+    .byte 0x20
+    .asciz "jr $ra"
+    .byte 0x2b
+    .asciz "movz "
+    .byte 0x30
+    .asciz "syscall"
+    .byte 0x41
+    .asciz "mfhi "
+    .byte 0x49
+    .asciz "mflo "
+    .byte 0x6f
+    .asciz "divu "
+    .byte 0x87
+    .asciz "addu "
+    .byte 0x8f
+    .asciz "subu "
     .byte 0x00
