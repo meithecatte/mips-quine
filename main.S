@@ -78,6 +78,29 @@ printinstr:
     li $s3, 2
 
 not_li:
+    srl $t0, $s1, 26
+    li $t7, 15
+    bne $t0, $t7, not_la
+    nop
+
+    li $a0, 1
+    la $a1, instr_la
+    li $a2, 3
+    li $v0, 4004
+    syscall
+
+    jal printreg
+    srl $a0, $s1, 16
+    jal sep
+    nop
+
+    sll $t0, $s1, 16
+    lh $a0, 2($s0)
+    addiu $s0, $s0, 4
+    j printtarget
+    addu $a0, $a0, $t0
+
+not_la:
     srl $t0, $s1, 24
     andi $t0, $t0, 252
 
@@ -91,7 +114,7 @@ check:
 
 skip:
     lb $t2, 0($t1)
-    bnez $t2, skip
+    bne $t2, $0, skip
     addiu $t1, $t1, 1
     j check
     nop
@@ -245,7 +268,8 @@ printnum:
 
 pos:
     li $a0, 1
-    la $a1, buf+15
+    la $a1, buf
+    addiu $a1, $a1, 16
     li $a2, 0
 
 digits:
@@ -300,6 +324,7 @@ minus: .ascii "-"
 lparen: .ascii "("
 rparen: .ascii ")"
 instr_li: .asciz "li"
+instr_la: .asciz "la "
 labend: .ascii ":\n"
 
 # oooooott
