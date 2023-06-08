@@ -2,11 +2,9 @@
 .set noreorder
 
 __start:
-    li $a0, 1
     la $a1, initstr
-    li $a2, 32
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
     la $t0, __executable_start
     lw $t1, 32($t0)
@@ -43,9 +41,8 @@ textloop:
     addu $0, $0, $0
 
     la $a1, labend
-    li $a2, 2
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
 notlabel:
     lw $s1, 0($s0)
@@ -56,21 +53,17 @@ notlabel:
     bne $t0, $0, noextranl
     movn $s4, $t0, $s4
 
-    li $a0, 1
     la $a1, newline
-    li $a2, 1
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
 noextranl:
     bne $s0, $s2, textloop
     addu $0, $0, $0
 
-    li $a0, 1
     la $a1, midstr
-    li $a2, 31
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
     li $a0, 0
     li $v0, 4001
@@ -79,21 +72,17 @@ noextranl:
 printinstr:
     addiu $sp, $sp, -8
     sw $ra, 0($sp)
-    li $a0, 1
     la $a1, indent
-    li $a2, 4
-    li $v0, 4004
-    syscall
+    jal zstr
+    li $t7, 288
 
     srl $t0, $s1, 21
-    li $t7, 288
     bne $t0, $t7, not_li
     addu $0, $0, $0
 
     la $a1, instr_li
-    li $a2, 3
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
     j found
     li $s3, 2
@@ -106,11 +95,9 @@ not_li:
     bne $t0, $t7, not_la
     addu $0, $0, $0
 
-    li $a0, 1
     la $a1, instr_la
-    li $a2, 3
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
     jal printreg
     srl $a0, $s1, 16
@@ -164,27 +151,21 @@ nors:
     beq $t0, $0, endinstr
     addu $0, $0, $0
 
-    li $a0, 1
     la $a1, lparen
-    li $a2, 1
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
     jal printreg
     srl $a0, $s1, 21
 
-    li $a0, 1
     la $a1, rparen
-    li $a2, 1
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
 endinstr:
-    li $a0, 1
     la $a1, newline
-    li $a2, 1
-    li $v0, 4004
-    syscall
+    jal zstr
+    addu $0, $0, $0
 
     lw $ra, 0($sp)
     jr $ra
@@ -280,15 +261,7 @@ simple:
     movz $s4, $t1, $t0
 
 sep:
-    li $a0, 1
     la $a1, comma
-    li $a2, 2
-    li $v0, 4004
-    syscall
-
-    jr $ra
-    addu $0, $0, $0
-
 zstr:
     li $a0, 1
     addu $t0, $a1, $0
@@ -337,7 +310,6 @@ printnum:
 
     subu $t0, $0, $t0
 pos:
-    li $a0, 1
     la $a1, buf
     addiu $a1, $a1, 16
     li $a2, 0
@@ -416,23 +388,23 @@ endtext:
 .data
 
 buf: .space 16
-initstr: .ascii ".global __start\n.set noreorder\n\n"
-midstr: .ascii "endtext:\n.data\n\nbuf: .space 16\n"
-dollar: .ascii "$"
-indent: .ascii "    "
-regs: .ascii "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
-comma: .ascii ", "
-newline: .ascii "\n"
-minus: .ascii "-"
-lparen: .ascii "("
-rparen: .ascii ")"
-instr_li: .ascii "li "
-instr_la: .ascii "la "
-labend: .ascii ":\n"
-strbegin: .ascii ": .ascii \""
-strend: .ascii "\"\n"
-escquote: .ascii "\\\""
-escnl: .ascii "\\n"
+initstr: .asciz ".global __start\n.set noreorder\n\n"
+midstr: .asciz "endtext:\n.data\n\nbuf: .space 16\n"
+dollar: .asciz "$"
+indent: .asciz "    "
+regs: .asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
+comma: .asciz ", "
+newline: .asciz "\n"
+minus: .asciz "-"
+lparen: .asciz "("
+rparen: .asciz ")"
+instr_li: .asciz "li "
+instr_la: .asciz "la "
+labend: .asciz ":\n"
+strbegin: .asciz ": .asciz \""
+strend: .asciz "\"\n"
+escquote: .asciz "\\\""
+escnl: .asciz "\\n"
 
 instrs:
     .byte 0x09
