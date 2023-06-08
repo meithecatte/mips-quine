@@ -23,8 +23,9 @@ findsymtab:
 
     addu $s6, $t0, $t5
     addu $s7, $s6, $t6
-    li $t1, 40
-    mul $t2, $t1, $t7
+    sll $t1, $t7, 5
+    sll $t2, $t7, 3
+    addu $t2, $t1, $t2
     addu $t2, $s0, $t2
     lw $t3, 16($t2)
     addu $s5, $t0, $t3
@@ -240,7 +241,7 @@ printnum:
     li $a2, 1
     li $v0, 4004
     syscall
-    negu $t0, $t0
+    subu $t0, $0, $t0
 
 pos:
     li $a0, 1
