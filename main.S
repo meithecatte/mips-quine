@@ -11,7 +11,7 @@ __start:
     la $t0, __executable_start
     lw $t1, 32($t0)
     addu $t1, $t0, $t1
-    move $s0, $t1
+    addu $s0, $0, $t1
     li $t3, 2
 findsymtab:
     lw $t4, 4($t1)
@@ -35,9 +35,9 @@ findsymtab:
 
 textloop:
     jal checksym
-    move $a0, $s0
+    addu $a0, $0, $s0
     beq $v0, $0, notlabel
-    move $a1, $v0
+    addu $a1, $0, $v0
 
     jal zstr
     nop
@@ -121,7 +121,7 @@ skip:
 
 found:
     jal zstr
-    move $a1, $t1
+    addu $a1, $0, $t1
 
     la $a1, indent
     li $a2, 1
@@ -205,7 +205,7 @@ printtarget:
     jal checksym
     nop
     jal zstr
-    move $a1, $v0
+    addu $a1, $0, $v0
     j endinstr
     nop
 
@@ -222,7 +222,7 @@ sep:
 # $a1
 zstr:
     li $a0, 1
-    move $t0, $a1
+    addu $t0, $0, $a1
     li $a2, -1
 measure:
     lb $t1, 0($t0)
@@ -290,7 +290,7 @@ digits:
 
 # $a0
 checksym:
-    move $t0, $s6
+    addu $t0, $0, $s6
 checksymloop:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
