@@ -46,81 +46,7 @@ p1:
 
 nlab:
     lw $s1, 0($s0)
-    jal pinstr
     addiu $s0, $s0, 4
-
-    addiu $t0, $s4, -1
-    bne $t0, $0, ngap
-    movn $s4, $t0, $s4
-
-    la $a1, nl
-    jal zstr
-    addu $0, $0, $0
-
-ngap:
-    bne $s0, $s2, p1
-    addu $0, $0, $0
-
-    la $a1, s1
-    jal zstr
-    addu $0, $0, $0
-
-    la $s0, s0
-    la $s2, tab
-p2:
-    jal sym
-    addu $a0, $s0, $0
-
-    jal zstr
-    addu $a1, $v0, $0
-
-    la $a1, sa
-    jal zstr
-    addu $0, $0, $0
-
-slit:
-    lb $t0, 0($s0)
-    beq $t0, $0, p2nl
-    li $a0, 1
-
-    li $a2, 2
-    la $a1, sbs
-    li $t1, 10
-    beq $t0, $t1, pch
-    li $t1, 34
-
-    addiu $a1, $a1, 2
-    beq $t0, $t1, pch
-    li $t1, 92
-
-    addiu $a1, $a1, 2
-    beq $t0, $t1, pch
-    addu $0, $0, $0
-
-    li $a2, 1
-    addu $a1, $s0, $0
-pch:
-    li $v0, 4004
-    syscall
-
-    j slit
-    addiu $s0, $s0, 1
-
-p2nl:
-    la $a1, se
-    jal zstr
-    addiu $s0, $s0, 1
-
-    bne $s0, $s2, p2
-    addu $0, $0, $0
-
-    li $a0, 0
-    li $v0, 4001
-    syscall
-
-pinstr:
-    addiu $sp, $sp, -8
-    sw $ra, 0($sp)
     la $a1, sp
     jal zstr
     li $t7, 288
@@ -216,9 +142,74 @@ p1nl:
     jal zstr
     addu $0, $0, $0
 
-    lw $ra, 0($sp)
-    jr $ra
-    addiu $sp, $sp, 8
+    addiu $t0, $s4, -1
+    bne $t0, $0, ngap
+    movn $s4, $t0, $s4
+
+    la $a1, nl
+    jal zstr
+    addu $0, $0, $0
+
+ngap:
+    bne $s0, $s2, p1
+    addu $0, $0, $0
+
+    la $a1, s1
+    jal zstr
+    addu $0, $0, $0
+
+    la $s0, s0
+    la $s2, tab
+p2:
+    jal sym
+    addu $a0, $s0, $0
+
+    jal zstr
+    addu $a1, $v0, $0
+
+    la $a1, sa
+    jal zstr
+    addu $0, $0, $0
+
+slit:
+    lb $t0, 0($s0)
+    beq $t0, $0, p2nl
+    li $a0, 1
+
+    li $a2, 2
+    la $a1, sbs
+    li $t1, 10
+    beq $t0, $t1, pch
+    li $t1, 34
+
+    addiu $a1, $a1, 2
+    beq $t0, $t1, pch
+    li $t1, 92
+
+    addiu $a1, $a1, 2
+    beq $t0, $t1, pch
+    addu $0, $0, $0
+
+    li $a2, 1
+    addu $a1, $s0, $0
+pch:
+    li $v0, 4004
+    syscall
+
+    j slit
+    addiu $s0, $s0, 1
+
+p2nl:
+    la $a1, se
+    jal zstr
+    addiu $s0, $s0, 1
+
+    bne $s0, $s2, p2
+    addu $0, $0, $0
+
+    li $a0, 0
+    li $v0, 4001
+    syscall
 
 bx:
     li $s4, 2
