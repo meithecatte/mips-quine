@@ -2,7 +2,7 @@
 .set noreorder
 
 __start:
-    la $a1, initstr
+    la $a1, s0
     jal zstr
     addu $0, $0, $0
 
@@ -11,12 +11,12 @@ __start:
     addu $t1, $t0, $t1
     addu $s0, $t1, $0
     li $t3, 2
-findsymtab:
+stab:
     lw $t4, 4($t1)
     lw $t5, 16($t1)
     lw $t6, 20($t1)
     lw $t7, 24($t1)
-    bne $t3, $t4, findsymtab
+    bne $t3, $t4, stab
     addiu $t1, $t1, 40
 
     addu $s6, $t0, $t5
@@ -28,13 +28,13 @@ findsymtab:
     lw $t3, 16($t2)
     addu $s5, $t0, $t3
     la $s0, __start
-    la $s2, endtext
+    la $s2, z
     li $s4, 0
-textloop:
-    jal checksym
+p1:
+    jal sym
     addu $a0, $s0, $0
 
-    beq $v0, $0, notlabel
+    beq $v0, $0, nlab
     addu $a1, $v0, $0
 
     jal zstr
@@ -44,62 +44,111 @@ textloop:
     jal zstr
     addu $0, $0, $0
 
-notlabel:
+nlab:
     lw $s1, 0($s0)
-    jal printinstr
+    jal pinstr
     addiu $s0, $s0, 4
 
     addiu $t0, $s4, -1
-    bne $t0, $0, noextranl
+    bne $t0, $0, ngap
     movn $s4, $t0, $s4
 
-    la $a1, newline
+    la $a1, nl
     jal zstr
     addu $0, $0, $0
 
-noextranl:
-    bne $s0, $s2, textloop
+ngap:
+    bne $s0, $s2, p1
     addu $0, $0, $0
 
-    la $a1, midstr
+    la $a1, s1
     jal zstr
+    addu $0, $0, $0
+
+    la $s0, s0
+    la $s2, tab
+p2:
+    jal sym
+    addu $a0, $s0, $0
+
+    jal zstr
+    addu $a1, $v0, $0
+
+    la $a1, strbegin
+    jal zstr
+    addu $0, $0, $0
+
+slit:
+    lb $t0, 0($s0)
+    beq $t0, $0, p2nl
+    li $a0, 1
+
+    li $a2, 2
+    la $a1, sbs
+    li $t1, 10
+    beq $t0, $t1, pch
+    li $t1, 34
+
+    addiu $a1, $a1, 2
+    beq $t0, $t1, pch
+    li $t1, 92
+
+    addiu $a1, $a1, 2
+    beq $t0, $t1, pch
+    addu $0, $0, $0
+
+    li $a2, 1
+    addu $a1, $s0, $0
+pch:
+    li $v0, 4004
+    syscall
+
+    j slit
+    addiu $s0, $s0, 1
+
+p2nl:
+    la $a1, strend
+    jal zstr
+    addiu $s0, $s0, 1
+
+    bne $s0, $s2, p2
     addu $0, $0, $0
 
     li $a0, 0
     li $v0, 4001
     syscall
 
-printinstr:
+pinstr:
     addiu $sp, $sp, -8
     sw $ra, 0($sp)
-    la $a1, indent
+    la $a1, sp
     jal zstr
     li $t7, 288
 
     srl $t0, $s1, 21
-    bne $t0, $t7, not_li
+    bne $t0, $t7, nli
     addu $0, $0, $0
 
-    la $a1, instr_li
+    la $a1, sli
     jal zstr
     addu $0, $0, $0
 
     j found
     li $s3, 2
 
-not_li:
+nli:
     srl $t0, $s1, 26
-    beq $t0, $0, reginstr
+    beq $t0, $0, renc
     li $t7, 15
 
-    bne $t0, $t7, not_la
+    bne $t0, $t7, nla
     addu $0, $0, $0
 
-    la $a1, instr_la
+    la $a1, sla
     jal zstr
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 16
 
     jal sep
@@ -108,25 +157,25 @@ not_li:
     sll $t0, $s1, 16
     lh $a0, 2($s0)
     addiu $s0, $s0, 4
-    j printtarget
+    j ptgt
     addu $a0, $a0, $t0
 
-not_la:
+nla:
     srl $a0, $s1, 24
-    la $a1, instrs
-    jal gettable
+    la $a1, tab
+    jal gtab
     andi $a0, $a0, 252
 
-    beq $v0, $0, endinstr
+    beq $v0, $0, p1nl
     addu $0, $0, $0
 
 found:
     andi $t0, $s3, 3
     addiu $t0, $t0, -1
-    beq $t0, $0, branch
+    beq $t0, $0, bx
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 16
 
     jal sep
@@ -136,7 +185,7 @@ found:
     bne $t0, $0, nors
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 21
 
     jal sep
@@ -148,22 +197,22 @@ nors:
     sra $t0, $t0, 16
 
     andi $t0, $s3, 1
-    beq $t0, $0, endinstr
+    beq $t0, $0, p1nl
     addu $0, $0, $0
 
-    la $a1, lparen
+    la $a1, lp
     jal zstr
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 21
 
-    la $a1, rparen
+    la $a1, rp
     jal zstr
     addu $0, $0, $0
 
-endinstr:
-    la $a1, newline
+p1nl:
+    la $a1, nl
     jal zstr
     addu $0, $0, $0
 
@@ -171,20 +220,20 @@ endinstr:
     jr $ra
     addiu $sp, $sp, 8
 
-branch:
+bx:
     li $s4, 2
     andi $t1, $s3, 16
     sll $t0, $s1, 6
-    beq $t1, $0, printtarget
+    beq $t1, $0, ptgt
     sra $a0, $t0, 4
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 21
 
     jal sep
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 16
 
     jal sep
@@ -193,41 +242,41 @@ branch:
     sll $t0, $s1, 16
     sra $t0, $t0, 14
     addu $a0, $s0, $t0
-printtarget:
-    jal checksym
+ptgt:
+    jal sym
     addu $0, $0, $0
 
     jal zstr
     addu $a1, $v0, $0
 
-    j endinstr
+    j p1nl
     addu $0, $0, $0
 
-reginstr:
+renc:
     andi $a0, $s1, 63
-    la $a1, reginstrs
-    jal gettable
+    la $a1, tab0
+    jal gtab
     sll $a0, $a0, 2
 
     andi $t0, $s3, 3
     beq $t0, $0, simple
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 11
 
     andi $t0, $s3, 2
-    beq $t0, $0, endinstr
+    beq $t0, $0, p1nl
     addu $0, $0, $0
 
     jal sep
     addu $0, $0, $0
 
     andi $t0, $s3, 1
-    bne $t0, $0, reg_dst
+    bne $t0, $0, dst
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 16
 
     jal sep
@@ -237,27 +286,27 @@ reginstr:
     jal printnum
     andi $t0, $t0, 31
 
-    j endinstr
+    j p1nl
     addu $0, $0, $0
 
-reg_dst:
-    jal printreg
+dst:
+    jal preg
     srl $a0, $s1, 21
 
     jal sep
     addu $0, $0, $0
 
-    jal printreg
+    jal preg
     srl $a0, $s1, 16
 
-    j endinstr
+    j p1nl
     addu $0, $0, $0
 
 simple:
     addiu $t0, $s3, -32
     li $t1, 2
     li $s4, 1
-    j endinstr
+    j p1nl
     movz $s4, $t1, $t0
 
 sep:
@@ -266,10 +315,10 @@ zstr:
     li $a0, 1
     addu $t0, $a1, $0
     li $a2, -1
-measure:
+len:
     lb $t1, 0($t0)
     addiu $a2, $a2, 1
-    bne $t1, $0, measure
+    bne $t1, $0, len
     addiu $t0, $t0, 1
 
     li $v0, 4004
@@ -278,7 +327,7 @@ measure:
     jr $ra
     addu $0, $0, $0
 
-printreg:
+preg:
     andi $a0, $a0, 31
     addu $t0, $a0, $a0
     li $a0, 1
@@ -287,7 +336,7 @@ printreg:
     li $v0, 4004
     syscall
 
-    la $a1, regs
+    la $a1, r_
     addu $a1, $a1, $t0
     li $a2, 2
     movz $a2, $a0, $t0
@@ -329,37 +378,37 @@ digits:
     jr $ra
     addu $0, $0, $0
 
-checksym:
+sym:
     addu $t0, $s6, $0
-checksymloop:
+nextsym:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
     beq $t2, $0, emptyname
     addiu $t0, $t0, 16
 
-    beq $a0, $t1, foundsym
+    beq $a0, $t1, symok
     addu $0, $0, $0
 
 emptyname:
-    bne $t0, $s7, checksymloop
+    bne $t0, $s7, nextsym
     addu $0, $0, $0
 
     jr $ra
     li $v0, 0
 
-foundsym:
+symok:
     jr $ra
     addu $v0, $t2, $s5
 
-gettable:
+gtab:
     addiu $sp, $sp, -8
     sw $ra, 0($sp)
-tableloop:
+next:
     lb $s3, 0($a1)
-    beq $s3, $0, nomatch
+    beq $s3, $0, nope
     andi $t3, $s3, 252
 
-    beq $a0, $t3, gotmatch
+    beq $a0, $t3, ok
     addiu $a1, $a1, 1
 
 skip:
@@ -367,15 +416,15 @@ skip:
     bne $t2, $0, skip
     addiu $a1, $a1, 1
 
-    j tableloop
+    j next
     addu $0, $0, $0
 
-nomatch:
+nope:
     li $v0, 0
     jr $ra
     addiu $sp, $sp, 8
 
-gotmatch:
+ok:
     jal zstr
     addu $0, $0, $0
 
@@ -384,29 +433,28 @@ gotmatch:
     jr $ra
     addiu $sp, $sp, 8
 
-endtext:
+z:
 .data
 
 buf: .space 16
-initstr: .asciz ".global __start\n.set noreorder\n\n"
-midstr: .asciz "endtext:\n.data\n\nbuf: .space 16\n"
+s0: .asciz ".global __start\n.set noreorder\n\n"
+s1: .asciz "z:\n.data\n\nbuf: .space 16\n"
 dollar: .asciz "$"
-indent: .asciz "    "
-regs: .asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
+sp: .asciz "    "
+r_: .asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
 comma: .asciz ", "
-newline: .asciz "\n"
+nl: .asciz "\n"
 minus: .asciz "-"
-lparen: .asciz "("
-rparen: .asciz ")"
-instr_li: .asciz "li "
-instr_la: .asciz "la "
+lp: .asciz "("
+rp: .asciz ")"
+sli: .asciz "li "
+sla: .asciz "la "
 labend: .asciz ":\n"
 strbegin: .asciz ": .asciz \""
 strend: .asciz "\"\n"
-escquote: .asciz "\\\""
-escnl: .asciz "\\n"
+sbs: .asciz "\\n\\\"\\\\"
 
-instrs:
+tab:
     .byte 0x09
     .asciz "j "
     .byte 0x0d
@@ -419,8 +467,6 @@ instrs:
     .asciz "addiu "
     .byte 0x30
     .asciz "andi "
-    .byte 0x3e
-    .asciz "lui "
     .byte 0x83
     .asciz "lb "
     .byte 0x87
@@ -433,7 +479,7 @@ instrs:
     .asciz "sw "
     .byte 0x00
 
-reginstrs:
+tab0:
     .byte 0x02
     .asciz "sll "
     .byte 0x0a
