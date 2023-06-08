@@ -169,26 +169,40 @@ p2:
     addu $0, $0, $0
 
 slit:
-    lb $t0, 0($s0)
+    lbu $t0, 0($s0)
     beq $t0, $0, p2nl
     li $a0, 1
 
-    li $a2, 2
-    la $a1, sbs
-    li $t1, 10
-    beq $t0, $t1, pch
-    li $t1, 34
-
-    addiu $a1, $a1, 2
-    beq $t0, $t1, pch
-    li $t1, 92
-
-    addiu $a1, $a1, 2
-    beq $t0, $t1, pch
-    addu $0, $0, $0
-
     li $a2, 1
     addu $a1, $s0, $0
+    sltiu $t1, $t0, 32
+    bne $t1, $0, esc
+    addiu $t1, $t0, -34
+
+    beq $t1, $0, esc
+    addiu $t1, $t0, -92
+
+    beq $t1, $0, esc
+    sltiu $t1, $t0, 127
+
+    bne $t1, $0, pch
+    addu $0, $0, $0
+
+esc:
+    la $a1, buf
+    li $t1, 92
+    sb $t1, 0($a1)
+    srl $t1, $t0, 6
+    addiu $t1, $t1, 48
+    sb $t1, 1($a1)
+    srl $t1, $t0, 3
+    andi $t1, $t1, 7
+    addiu $t1, $t1, 48
+    sb $t1, 2($a1)
+    andi $t1, $t0, 7
+    addiu $t1, $t1, 48
+    sb $t1, 3($a1)
+    li $a2, 4
 pch:
     li $v0, 4004
     syscall
@@ -419,22 +433,21 @@ z:
 .data
 
 buf: .space 16
-s0: .asciz ".global __start\n.set noreorder\n\n"
-s1: .asciz "z:\n.data\n\nbuf: .space 16\n"
+s0: .asciz ".global __start\012.set noreorder\012\012"
+s1: .asciz "z:\012.data\012\012buf: .space 16\012"
 usd: .asciz "$"
 sp: .asciz "    "
 r_: .asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
 comma: .asciz ", "
-nl: .asciz "\n"
+nl: .asciz "\012"
 ng: .asciz "-"
 lp: .asciz "("
 rp: .asciz ")"
 sli: .asciz "li "
 sla: .asciz "la "
-lz: .asciz ":\n"
-sa: .asciz ": .asciz \""
-se: .asciz "\"\n"
-sbs: .asciz "\\n\\\"\\\\"
+lz: .asciz ":\012"
+sa: .asciz ": .asciz \042"
+se: .asciz "\042\012"
 
 t1:
     .byte 0x09
@@ -447,6 +460,8 @@ t1:
     .asciz "bne "
     .byte 0x24
     .asciz "addiu "
+    .byte 0x2c
+    .asciz "sltiu "
     .byte 0x30
     .asciz "andi "
     .byte 0x83
@@ -455,6 +470,8 @@ t1:
     .asciz "lh "
     .byte 0x8f
     .asciz "lw "
+    .byte 0x93
+    .asciz "lbu "
     .byte 0xa3
     .asciz "sb "
     .byte 0xaf
