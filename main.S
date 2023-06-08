@@ -78,17 +78,16 @@ nli:
     srl $a0, $s1, 16
 
     jal sep
-    addu $0, $0, $0
+    sll $t7, $s1, 16
 
-    sll $t0, $s1, 16
     lh $a0, 2($s0)
     addiu $s0, $s0, 4
     j ptgt
-    addu $a0, $a0, $t0
+    addu $a0, $a0, $t7
 
 nla:
     srl $a0, $s1, 24
-    la $a1, tab
+    la $a1, t1
     jal gtab
     andi $a0, $a0, 252
 
@@ -105,10 +104,9 @@ found:
     srl $a0, $s1, 16
 
     jal sep
-    addu $0, $0, $0
+    andi $t7, $s3, 2
 
-    andi $t0, $s3, 2
-    bne $t0, $0, nors
+    bne $t7, $0, nors
     addu $0, $0, $0
 
     jal preg
@@ -140,11 +138,10 @@ nors:
 p1nl:
     la $a1, nl
     jal zstr
-    addu $0, $0, $0
+    addiu $t7, $s4, -1
 
-    addiu $t0, $s4, -1
-    bne $t0, $0, ngap
-    movn $s4, $t0, $s4
+    bne $t7, $0, ngap
+    movn $s4, $t7, $s4
 
     la $a1, nl
     jal zstr
@@ -159,7 +156,7 @@ ngap:
     addu $0, $0, $0
 
     la $s0, s0
-    la $s2, tab
+    la $s2, t1
 p2:
     jal sym
     addu $a0, $s0, $0
@@ -205,9 +202,8 @@ p2nl:
     addiu $s0, $s0, 1
 
     bne $s0, $s2, p2
-    addu $0, $0, $0
-
     li $a0, 0
+
     li $v0, 4001
     syscall
 
@@ -243,7 +239,7 @@ ptgt:
 
 renc:
     andi $a0, $s1, 63
-    la $a1, tab0
+    la $a1, t0
     jal gtab
     sll $a0, $a0, 2
 
@@ -259,21 +255,19 @@ renc:
     addu $0, $0, $0
 
     jal sep
-    addu $0, $0, $0
+    andi $t7, $s3, 1
 
-    andi $t0, $s3, 1
-    bne $t0, $0, dst
+    bne $t7, $0, dst
     addu $0, $0, $0
 
     jal preg
     srl $a0, $s1, 16
 
     jal sep
-    addu $0, $0, $0
+    srl $t7, $s1, 6
 
-    srl $t0, $s1, 6
     jal pnum
-    andi $t0, $t0, 31
+    andi $t0, $t7, 31
 
     j p1nl
     addu $0, $0, $0
@@ -319,7 +313,7 @@ preg:
     andi $a0, $a0, 31
     addu $t0, $a0, $a0
     li $a0, 1
-    la $a1, dollar
+    la $a1, usd
     li $a2, 1
     li $v0, 4004
     syscall
@@ -340,7 +334,7 @@ pnum:
     li $t7, 10
 
     li $a0, 1
-    la $a1, minus
+    la $a1, ng
     li $a2, 1
     li $v0, 4004
     syscall
@@ -427,12 +421,12 @@ z:
 buf: .space 16
 s0: .asciz ".global __start\n.set noreorder\n\n"
 s1: .asciz "z:\n.data\n\nbuf: .space 16\n"
-dollar: .asciz "$"
+usd: .asciz "$"
 sp: .asciz "    "
 r_: .asciz "0 atv0v1a0a1a2a3t0t1t2t3t4t5t6t7s0s1s2s3s4s5s6s7t8t9k0k1gpspfpra"
 comma: .asciz ", "
 nl: .asciz "\n"
-minus: .asciz "-"
+ng: .asciz "-"
 lp: .asciz "("
 rp: .asciz ")"
 sli: .asciz "li "
@@ -442,7 +436,7 @@ sa: .asciz ": .asciz \""
 se: .asciz "\"\n"
 sbs: .asciz "\\n\\\"\\\\"
 
-tab:
+t1:
     .byte 0x09
     .asciz "j "
     .byte 0x0d
@@ -467,7 +461,7 @@ tab:
     .asciz "sw "
     .byte 0x00
 
-tab0:
+t0:
     .byte 0x02
     .asciz "sll "
     .byte 0x0a
