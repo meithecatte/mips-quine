@@ -11,7 +11,7 @@ __start:
     la $t0, __executable_start
     lw $t1, 32($t0)
     addu $t1, $t0, $t1
-    addu $s0, $0, $t1
+    addu $s0, $t1, $0
     li $t3, 2
 findsymtab:
     lw $t4, 4($t1)
@@ -35,9 +35,9 @@ findsymtab:
 
 textloop:
     jal checksym
-    addu $a0, $0, $s0
+    addu $a0, $s0, $0
     beq $v0, $0, notlabel
-    addu $a1, $0, $v0
+    addu $a1, $v0, $0
 
     jal zstr
     nop
@@ -112,7 +112,7 @@ not_la:
 
 found:
     jal zstr
-    addu $a1, $0, $v0
+    addu $a1, $v0, $0
 
     la $a1, indent
     li $a2, 1
@@ -196,7 +196,7 @@ printtarget:
     jal checksym
     nop
     jal zstr
-    addu $a1, $0, $v0
+    addu $a1, $v0, $0
     j endinstr
     nop
 
@@ -213,7 +213,7 @@ sep:
 # $a1
 zstr:
     li $a0, 1
-    addu $t0, $0, $a1
+    addu $t0, $a1, $0
     li $a2, -1
 measure:
     lb $t1, 0($t0)
@@ -281,7 +281,7 @@ digits:
 
 # $a0
 checksym:
-    addu $t0, $0, $s6
+    addu $t0, $s6, $0
 checksymloop:
     lw $t1, 4($t0)
     lw $t2, 0($t0)
@@ -320,7 +320,7 @@ nomatch:
     li $v0, 0
 gotmatch:
     jr $ra
-    addu $v0, $0, $a1
+    addu $v0, $a1, $0
 
 endtext:
 .data
